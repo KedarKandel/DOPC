@@ -5,6 +5,7 @@ import {
   FieldErrors,
   UseFormClearErrors,
   SubmitHandler,
+  UseFormTrigger,
 } from "react-hook-form";
 import { FormData } from "../utils/schema";
 import FormInput from "./FormInput";
@@ -21,8 +22,9 @@ type CalculateFormProps = {
   clearFormErrors: UseFormClearErrors<FormData>;
   globalErrors: string | null;
   setGlobalErrors: React.Dispatch<React.SetStateAction<string | null>>;
-  isSubmitting: boolean
-  onFormSubmit: SubmitHandler<FormData>
+  isSubmitting: boolean;
+  onFormSubmit: SubmitHandler<FormData>;
+  trigger: UseFormTrigger<FormData>;
 };
 
 const CalculateForm = ({
@@ -31,21 +33,21 @@ const CalculateForm = ({
   setValue,
   formErrors,
   clearFormErrors,
+  trigger,
   globalErrors,
   setGlobalErrors,
   isSubmitting,
-  onFormSubmit
+  onFormSubmit,
 }: CalculateFormProps) => {
   // get location state
   const [isLocationFetching, setIsLocationFetching] = useState(false);
 
   // get the user location
   const handleGetLocation = async () => {
-    setGlobalErrors("");
+    setGlobalErrors(null);
     setIsLocationFetching(true);
     clearFormErrors("userLatitude");
     clearFormErrors("userLongitude");
-
     try {
       const location = await getUserLocation();
       setValue("userLatitude", location.userLatitude);
@@ -55,6 +57,26 @@ const CalculateForm = ({
     } finally {
       setIsLocationFetching(false);
     }
+  };
+
+  // Handle input changes for proper formatting of cart value
+  //  => add leading zero if input starts with "."
+  const handleChange = (
+    fieldName: keyof FormData,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { value } = e.target;
+    // Clear errors for the field
+    clearFormErrors(fieldName);
+
+    if (fieldName === "cartValue") {
+      const formattedValue = value.startsWith(".") ? `0${value}` : value;
+      setValue("cartValue", formattedValue);
+    } else {
+      setValue(fieldName, value);
+    }
+    // Trigger validation for empty fields again.
+    trigger(fieldName);
   };
 
   return (
@@ -68,10 +90,12 @@ const CalculateForm = ({
       <FormInput
         name="venueSlug"
         label="Venue Slug"
+        dataTestId="venueSlug"
         type="text"
         placeholder="Venue name"
         register={register("venueSlug")}
         error={formErrors.venueSlug}
+        onChange={(e) => handleChange("venueSlug", e)}
       />
       <FormInput
         name="cartValue"
@@ -81,7 +105,7 @@ const CalculateForm = ({
         placeholder="0.00"
         register={register("cartValue")}
         error={formErrors.cartValue}
-        required
+        onChange={(e) => handleChange("cartValue", e)}
       />
       <FormInput
         name="userLatitude"

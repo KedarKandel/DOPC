@@ -5,14 +5,33 @@ const twoDecimalRegex = /^\d+(\.\d{1,2})?$/;
 
 // zod schema for form data
 export const schema = z.object({
-  venueSlug: z.string().min(3, { message: "Venue is required" }),
-  cartValue: z
-    .string()
-    .regex(twoDecimalRegex, {
-      message: "Cart value must be a positive number with up to 2 decimal places.",
-    }),
+  venueSlug: z.string().min(3, { message: "Venue with 3 or more characters." }),
+  cartValue: z.string().regex(twoDecimalRegex, {
+    message:
+      "Cart value must be a positive number with up to 2 decimal places.",
+  }),
   userLatitude: z.string().nonempty("Latitude is required."),
   userLongitude: z.string().nonempty("Longitude is required."),
 });
 
 export type FormData = z.infer<typeof schema>;
+
+// type for distance ranges
+
+export type distanceRangesType = {
+  min: number;
+  max: number;
+  a: number;
+  b: number;
+  flag: null | string;
+};
+
+// type for pricebreakdowm
+export type PriceBreakdown = {
+  cartValue:number
+  distance:number
+  smallOrderSurcharge: number;
+  deliveryFee: number;
+  totalPrice: number;
+  error?: string;
+};

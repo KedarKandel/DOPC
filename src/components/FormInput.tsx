@@ -14,19 +14,9 @@ const FormInput = ({
   register,
   error,
   onChange,
+
   ...props
 }: FormInputProps) => {
-
-  // handle typing a decimal number.
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    // If the input starts with a decimal point, add a leading zero
-    if (value.startsWith(".")) {
-      value = "0" + value;
-    }
-    e.target.value = value;
-  };
-
   return (
     <div className="mb-4">
       <label className="block text-gray-700" htmlFor={props.name}>
@@ -42,7 +32,9 @@ const FormInput = ({
         data-test-id={dataTestId}
         {...register}
         {...props}
-        onChange={handleChange}
+        onChange={(e) => {
+          if (onChange) onChange(e);
+        }}
       />
       {error && <p className="text-red-700 text-sm mt-1">{error.message}</p>}
     </div>

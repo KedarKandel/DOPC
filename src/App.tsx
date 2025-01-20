@@ -1,28 +1,28 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { schema } from "./utils/schema";
+import { PriceBreakdown, schema } from "./utils/schema";
 import { FormData } from "./utils/schema";
 import CalculateForm from "./components/CalculateForm";
-import { useEffect, useState } from "react";
-import { fetchVenueLocation } from "./utils/utils";
-
+import { useState } from "react";
+import { calculatePriceBreakDown } from "./utils/utils";
 
 function App() {
-
- // global states
-  const [globalErrors, setGlobalErrors] = useState<string |null>(null);
-  const [isLoading, setIsLoading] = useState(false)
+  // global states
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
+    null
+  );
+  const [globalErrors, setGlobalErrors] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     clearErrors,
-    formState: { errors,isSubmitting},
+    trigger,
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
-      venueSlug: "home-assignment-venue-helsinki",
+      venueSlug: "",
       cartValue: "",
       userLatitude: "",
       userLongitude: "",
@@ -30,38 +30,41 @@ function App() {
     resolver: zodResolver(schema),
   });
 
-  // venue name
-  const venueSlug = watch("venueSlug");
-
-  const onSubmit = async (data:FormData) => {
-    setGlobalErrors(null)
+  //
+  const onSubmit = async (data: FormData) => {
     try {
-      setIsLoading(true)
-      console.log(isSubmitting)
-      const venueLocation = await fetchVenueLocation(venueSlug)
-      const {venueLatitude, venueLongitude} = venueLocation
-      console.log(venueLatitude, venueLongitude)
-      console.log(isSubmitting)
-      return {venueLatitude, venueLongitude}
-    } catch (error) {
-      setGlobalErrors("Venue details not found")
-      setIsLoading(false)
-    }
-  };
+      const result = await calculatePriceBreakDown(
+        data.venueSlug,
+        parseFloat(data.cartValue)
+      );
 
-  
+      if (result.error) {
+        setGlobalErrors(result.error);
+        setPriceBreakdown(null); // Clear the price breakdown
+      } else {
+        setPriceBreakdown(result); // Set the price breakdown if no error
+      }
+    } catch (error) {
+      setGlobalErrors(
+        "An error occurred while calculating the price breakdown."
+      );
+      setPriceBreakdown(null); // Clear the price breakdown in case of error
+    }
+    console.log(priceBreakdown)
+  };
 
   return (
     <CalculateForm
       setValue={setValue}
       formErrors={errors}
       clearFormErrors={clearErrors}
+      trigger={trigger}
       register={register}
       handleSubmit={handleSubmit}
-      globalErrors= {globalErrors}
-      setGlobalErrors = {setGlobalErrors}
-      onFormSubmit = {onSubmit}
-      isSubmitting= {isSubmitting}
+      globalErrors={globalErrors}
+      setGlobalErrors={setGlobalErrors}
+      onFormSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     />
   );
 }
