@@ -7,12 +7,13 @@ import {
   SubmitHandler,
   UseFormTrigger,
 } from "react-hook-form";
-import { FormData } from "../utils/schema";
+import { FormData, PriceBreakDownType } from "../utils/schema";
 import FormInput from "./FormInput";
 import CalculateBtn from "./CalculateBtn";
 import GetLocationBtn from "./GetLocationBtn";
 import { getUserLocation } from "../utils/utils";
 import { useState } from "react";
+import PriceBreakdownDisplay from "./PriceBreakDown";
 
 type CalculateFormProps = {
   register: UseFormRegister<FormData>;
@@ -25,6 +26,7 @@ type CalculateFormProps = {
   isSubmitting: boolean;
   onFormSubmit: SubmitHandler<FormData>;
   trigger: UseFormTrigger<FormData>;
+  priceBreakdown: PriceBreakDownType | null
 };
 
 const CalculateForm = ({
@@ -38,6 +40,7 @@ const CalculateForm = ({
   setGlobalErrors,
   isSubmitting,
   onFormSubmit,
+  priceBreakdown
 }: CalculateFormProps) => {
   // get location state
   const [isLocationFetching, setIsLocationFetching] = useState(false);
@@ -82,8 +85,9 @@ const CalculateForm = ({
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="max-w-sm mx-auto flex flex-col space-y-2 p-3 mt-8"
+      className="w-full bg-[#fff] max-w-md mx-auto flex flex-col space-y-4 p-4 border-2 border-gray-300 rounded-lg shadow-lg"
     >
+      
       <h1 className="mb-2 text-2xl text-blue-500 font-bold">
         Delivery Order Price Calculator
       </h1>
@@ -129,12 +133,13 @@ const CalculateForm = ({
         readOnly
         required
       />
+      {globalErrors && <p className="my-1 text-red-500">{globalErrors}</p> }
       <GetLocationBtn
         getLocation={handleGetLocation}
         isLocationFetching={isLocationFetching}
-        error={globalErrors}
       />
-      <CalculateBtn isSubmitting={isSubmitting} />
+      <CalculateBtn isSubmitting={isSubmitting}/>
+      <PriceBreakdownDisplay priceBreakdown={priceBreakdown}/>
     </form>
   );
 };

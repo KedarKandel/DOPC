@@ -27,7 +27,7 @@ export type distanceRangesType = {
 };
 
 // type for pricebreakdowm
-export type PriceBreakdown = {
+export type PriceBreakDownType = {
   cartValue: number;
   distance: number;
   smallOrderSurcharge: number;

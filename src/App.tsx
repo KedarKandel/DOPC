@@ -1,18 +1,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PriceBreakdown, schema } from "./utils/schema";
+import { PriceBreakDownType, schema } from "./utils/schema";
 import { FormData } from "./utils/schema";
 import CalculateForm from "./components/CalculateForm";
 import { useState } from "react";
 import { calculatePriceBreakDown } from "./utils/utils";
 
-import PriceBreakdownDisplay from "./components/PriceBreakDown";
-
 function App() {
   // global states
-  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
-    null
-  );
+  const [priceBreakdown, setPriceBreakdown] =
+    useState<PriceBreakDownType | null>(null);
   const [globalErrors, setGlobalErrors] = useState<string | null>(null);
 
   const {
@@ -24,7 +21,7 @@ function App() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
-      venueSlug: "",
+      venueSlug: "home-assignment-venue-helsinki",
       cartValue: "",
       userLatitude: "",
       userLongitude: "",
@@ -56,7 +53,8 @@ function App() {
   };
 
   return (
-    <>
+    <div className=" min-h-screen bg-gradient-to-r from-sky-400 to-sky-500">
+      <h1 className="text-2xl font-extrabold text-white p-2">Wolt</h1>
       <CalculateForm
         setValue={setValue}
         formErrors={errors}
@@ -68,9 +66,9 @@ function App() {
         setGlobalErrors={setGlobalErrors}
         onFormSubmit={onSubmit}
         isSubmitting={isSubmitting}
+        priceBreakdown={priceBreakdown}
       />
-      <PriceBreakdownDisplay priceBreakdown={priceBreakdown} />
-    </>
+    </div>
   );
 }
 

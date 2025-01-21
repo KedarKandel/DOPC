@@ -1,4 +1,4 @@
-import { distanceRangesType, PriceBreakdown } from "./schema";
+import { distanceRangesType, PriceBreakDownType } from "./schema";
 
 // helper function to get user location co-ordinates.
 export const getUserLocation = (): Promise<{
@@ -44,9 +44,9 @@ export const fetchVenueLocation = async (
       venueLongitude: venueData.venue_raw.location.coordinates[0],
       venueLatitude: venueData.venue_raw.location.coordinates[1],
     };
-  } catch (error) {
-    console.log("Error fetching venue static data:", error);
-    throw Error(`${error}`);
+  } catch (error: any) {
+    console.log(`Error fetching venue static data: ${error}`);
+    throw Error(`${error.message}`);
   }
 };
 
@@ -90,9 +90,9 @@ export const calculateDistance = async (venueSlug: string): Promise<number> => {
 
     // Calculate distance using haversine formula
     return haversineDistance(userLat, userLon, venueLat, venueLon);
-  } catch (error) {
-    console.log("Error calculating distance:", error);
-    throw Error(`Error fetching location data: ${error}`);
+  } catch (error: any) {
+    console.log(`Error calculating distance: ${error}`);
+    throw Error(error.message);
   }
 };
 
@@ -112,7 +112,7 @@ export const fetchVenueDynamicData = async (
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch venue data or venue not found: ${response.status}`
+        ` ${response.status}! Failed to fetch venue data or venue not found.`
       );
     }
     const venueData = await response.json();
@@ -124,9 +124,9 @@ export const fetchVenueDynamicData = async (
       distanceRanges:
         venueData.venue_raw.delivery_specs.delivery_pricing.distance_ranges,
     };
-  } catch (error) {
-    console.log("Error fetching venue dynamic data", error);
-    throw Error(`${error}`);
+  } catch (error: any) {
+    console.log("Error fetching venue dynamic data.", error);
+    throw Error(error.message);
   }
 };
 
@@ -135,7 +135,10 @@ export const fetchVenueDynamicData = async (
 export const calculatePriceBreakDown = async (
   venueSlug: string,
   cartValue: number
-): Promise<PriceBreakdown> => {
+): Promise<PriceBreakDownType> => {
+  
+// converting cartvalue to cents
+  const cartValueInCents = cartValue * 100;
   try {
     const { basePrice, orderMinimumNoSurcharge, distanceRanges } =
       await fetchVenueDynamicData(venueSlug);
@@ -144,7 +147,7 @@ export const calculatePriceBreakDown = async (
     const distance = await calculateDistance(venueSlug);
 
     // Calculate small order surcharge
-    const cartValueInCents = cartValue * 100;
+    
     const smallOrderSurcharge = Math.max(
       0,
       orderMinimumNoSurcharge - cartValueInCents
@@ -164,7 +167,7 @@ export const calculatePriceBreakDown = async (
 
     if (!applicableRange) {
       return {
-        cartValue,
+        cartValue: cartValueInCents,
         distance,
         smallOrderSurcharge: 0,
         deliveryFee: 0,
@@ -182,7 +185,7 @@ export const calculatePriceBreakDown = async (
     const totalPrice = cartValueInCents + smallOrderSurcharge + deliveryFee;
 
     return {
-      cartValue,
+      cartValue: cartValueInCents,
       distance,
       smallOrderSurcharge,
       deliveryFee,
@@ -191,12 +194,12 @@ export const calculatePriceBreakDown = async (
   } catch (error) {
     console.log("Error calculating price breakdown:", error);
     return {
-      cartValue,
+      cartValue: cartValueInCents,
       distance: 0,
       smallOrderSurcharge: 0,
       deliveryFee: 0,
       totalPrice: 0,
-      error: `${error}` || "Failed to calculate pricebreakdown",
+      error: `${error}` || "Failed to calculate pricebreakdown.",
     };
   }
 };

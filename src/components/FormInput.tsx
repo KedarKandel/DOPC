@@ -18,8 +18,8 @@ const FormInput = ({
   ...props
 }: FormInputProps) => {
   return (
-    <div className="mb-4">
-      <label className="block text-gray-700" htmlFor={props.name}>
+    <div className="mb-4 w-4/5">
+      <label className="block text-lg text-gray-700" htmlFor={props.name}>
         {label}
       </label>
       <input
