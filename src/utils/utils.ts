@@ -1,6 +1,6 @@
-import { distanceRangesType, PriceBreakDownType } from "./schema";
+import { distanceRangesType, PriceBreakDownType } from "./types";
 
-// helper function to get user location co-ordinates.
+// helper function to get user's location co-ordinates.
 export const getUserLocation = (): Promise<{
   userLatitude: string;
   userLongitude: string;
@@ -24,7 +24,7 @@ export const getUserLocation = (): Promise<{
   });
 };
 
-// Helper function to fetch venue data
+// Helper function to fetch venue's static data
 export const fetchVenueLocation = async (
   venueSlug: string
 ): Promise<{
@@ -46,7 +46,7 @@ export const fetchVenueLocation = async (
     };
   } catch (error: any) {
     console.log(`Error fetching venue static data: ${error}`);
-    throw Error(`${error.message}`);
+    throw Error(error.message);
   }
 };
 
@@ -73,7 +73,7 @@ export const haversineDistance = (
   return distance;
 };
 
-// Combined helper to calculate distance between user and venue
+// Combined helper to calculate distance between user and venue.
 export const calculateDistance = async (venueSlug: string): Promise<number> => {
   try {
     // Fetch both user and venue locations
@@ -96,7 +96,7 @@ export const calculateDistance = async (venueSlug: string): Promise<number> => {
   }
 };
 
-// helper function to fetch the venue dynamic data
+// helper function to fetch the venue's dynamic data
 
 export const fetchVenueDynamicData = async (
   venueSlug: string
@@ -116,7 +116,7 @@ export const fetchVenueDynamicData = async (
       );
     }
     const venueData = await response.json();
-
+    // console.log(venueData);
     return {
       basePrice: venueData.venue_raw.delivery_specs.delivery_pricing.base_price,
       orderMinimumNoSurcharge:
@@ -136,8 +136,7 @@ export const calculatePriceBreakDown = async (
   venueSlug: string,
   cartValue: number
 ): Promise<PriceBreakDownType> => {
-  
-// converting cartvalue to cents
+  // converting cartvalue to cents
   const cartValueInCents = cartValue * 100;
   try {
     const { basePrice, orderMinimumNoSurcharge, distanceRanges } =
@@ -147,7 +146,7 @@ export const calculatePriceBreakDown = async (
     const distance = await calculateDistance(venueSlug);
 
     // Calculate small order surcharge
-    
+
     const smallOrderSurcharge = Math.max(
       0,
       orderMinimumNoSurcharge - cartValueInCents
@@ -194,7 +193,7 @@ export const calculatePriceBreakDown = async (
   } catch (error) {
     console.log("Error calculating price breakdown:", error);
     return {
-      cartValue: cartValueInCents,
+      cartValue: 0,
       distance: 0,
       smallOrderSurcharge: 0,
       deliveryFee: 0,

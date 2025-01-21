@@ -10,7 +10,7 @@ const CalculateBtn = ({ isSubmitting }: Props) => {
       }`}
       disabled={isSubmitting}
     >
-      {isSubmitting ? "Calculating..........": "Calculate delivery price"}
+      {isSubmitting ? "Calculating...": "Calculate delivery price"}
     </button>
   );
 };

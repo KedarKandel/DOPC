@@ -1,3 +1,5 @@
+// libraries
+import { useState } from "react";
 import {
   UseFormRegister,
   UseFormSetValue,
@@ -7,12 +9,16 @@ import {
   SubmitHandler,
   UseFormTrigger,
 } from "react-hook-form";
-import { FormData, PriceBreakDownType } from "../utils/schema";
+
+// types and utilities
+import { FormData } from "../utils/schema";
+import { PriceBreakDownType } from "../utils/types";
+import { getUserLocation } from "../utils/utils";
+
+// components
 import FormInput from "./FormInput";
 import CalculateBtn from "./CalculateBtn";
 import GetLocationBtn from "./GetLocationBtn";
-import { getUserLocation } from "../utils/utils";
-import { useState } from "react";
 import PriceBreakdownDisplay from "./PriceBreakDown";
 
 type CalculateFormProps = {
@@ -26,7 +32,7 @@ type CalculateFormProps = {
   isSubmitting: boolean;
   onFormSubmit: SubmitHandler<FormData>;
   trigger: UseFormTrigger<FormData>;
-  priceBreakdown: PriceBreakDownType | null
+  priceBreakdown: PriceBreakDownType | null;
 };
 
 const CalculateForm = ({
@@ -40,7 +46,7 @@ const CalculateForm = ({
   setGlobalErrors,
   isSubmitting,
   onFormSubmit,
-  priceBreakdown
+  priceBreakdown,
 }: CalculateFormProps) => {
   // get location state
   const [isLocationFetching, setIsLocationFetching] = useState(false);
@@ -63,14 +69,16 @@ const CalculateForm = ({
   };
 
   // Handle input changes for proper formatting of cart value
-  //  => add leading zero if input starts with "."
+  //  -- add leading zero if input starts with "."
   const handleChange = (
     fieldName: keyof FormData,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { value } = e.target;
-    // Clear errors for the field
+    // Clear errors for the field first
     clearFormErrors(fieldName);
+    // clear global errors once typing starts
+    setGlobalErrors(null);
 
     if (fieldName === "cartValue") {
       const formattedValue = value.startsWith(".") ? `0${value}` : value;
@@ -85,10 +93,9 @@ const CalculateForm = ({
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="w-full bg-[#fff] max-w-md mx-auto flex flex-col space-y-4 p-4 border-2 border-gray-300 rounded-lg shadow-lg"
+      className="w-full bg-[#fff] max-w-md mx-auto flex flex-col space-y-4 py-2 px-4 border-2 border-gray-300 rounded-lg shadow-lg"
     >
-      
-      <h1 className="mb-2 text-2xl text-blue-500 font-bold">
+      <h1 className="mb-2 text-2xl text-blue-500 font-bold p-1 border-b border-blue-400 shadow-sm">
         Delivery Order Price Calculator
       </h1>
       <FormInput
@@ -133,13 +140,15 @@ const CalculateForm = ({
         readOnly
         required
       />
-      {globalErrors && <p className="my-1 text-red-500">{globalErrors}</p> }
+      {globalErrors && (
+        <p className="my-1 text-sm text-red-500">{globalErrors}</p>
+      )}
       <GetLocationBtn
         getLocation={handleGetLocation}
         isLocationFetching={isLocationFetching}
       />
-      <CalculateBtn isSubmitting={isSubmitting}/>
-      <PriceBreakdownDisplay priceBreakdown={priceBreakdown}/>
+      <CalculateBtn isSubmitting={isSubmitting} />
+      <PriceBreakdownDisplay priceBreakdown={priceBreakdown} />
     </form>
   );
 };

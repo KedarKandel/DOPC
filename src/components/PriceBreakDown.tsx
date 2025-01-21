@@ -1,4 +1,4 @@
-import { PriceBreakDownType } from "../utils/schema";
+import { PriceBreakDownType } from "../utils/types";
 
 type PriceBreakdownDisplayProps = {
   priceBreakdown: PriceBreakDownType | null;
@@ -11,6 +11,8 @@ const PriceBreakdownDisplay = ({
     return <p>No price breakdown available. Please calculate first.</p>;
   }
 
+
+  // format currency and handle data-raw-value
   const formatCurrency = (value: number) => {
     const euros = (value / 100).toFixed(2);
     return (
@@ -23,42 +25,34 @@ const PriceBreakdownDisplay = ({
     );
   };
 
+  // format distance and handle data-raw-value
   const formatDistance = (value: number) => (
-    <span data-raw-value={value}>{`${value} m`}</span>
+    <span data-raw-value={value / 1000}>{`${value} m`}</span>
   );
 
   return (
     <div className="flex flex-col space-y-2 p-3 mt-8">
       <h2 className="text-lg font-bold text-gray-700">Price Breakdown</h2>
-      <div className="flex justify-between">
+      <div className="flex justify-between font-medium">
         <span>Cart Value:</span>
-        <span data-raw-value={priceBreakdown.cartValue * 100}>
-          {formatCurrency(priceBreakdown.cartValue)}
-        </span>
+        {formatCurrency(priceBreakdown.cartValue)}
       </div>
-      <div className="flex justify-between">
+      <div className="flex justify-between font-medium">
         <span>Distance:</span>
-        <span data-raw-value={priceBreakdown.distance}>
-          {formatDistance(priceBreakdown.distance)}
-        </span>
+        {formatDistance(priceBreakdown.distance)}
       </div>
-      <div className="flex justify-between">
-        <span>Small Order Surcharge:</span>
-        <span data-raw-value={priceBreakdown.smallOrderSurcharge * 100}>
-          {formatCurrency(priceBreakdown.smallOrderSurcharge)}
-        </span>
-      </div>
-      <div className="flex justify-between">
+      <div className="flex justify-between font-medium">
         <span>Delivery Fee:</span>
-        <span data-raw-value={priceBreakdown.deliveryFee * 100}>
-          {formatCurrency(priceBreakdown.deliveryFee)}
-        </span>
+        {formatCurrency(priceBreakdown.deliveryFee)}
       </div>
+      <div className="flex justify-between font-medium">
+        <span>Small Order Surcharge:</span>
+        {formatCurrency(priceBreakdown.smallOrderSurcharge)}
+      </div>
+
       <div className="flex justify-between font-bold">
         <span>Total Price:</span>
-        <span data-raw-value={priceBreakdown.totalPrice * 100}>
-          {formatCurrency(priceBreakdown.totalPrice)}
-        </span>
+        {formatCurrency(priceBreakdown.totalPrice)}
       </div>
     </div>
   );
