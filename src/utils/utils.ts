@@ -35,7 +35,9 @@ export const fetchVenueLocation = async (
     const endpoint = `https://consumer-api.development.dev.woltapi.com/home-assignment-api/v1/venues/${venueSlug}/static`;
     const response = await fetch(endpoint);
     if (!response.ok) {
-      throw new Error(`Failed to fetch venue data: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch venue data or venue not found:${response.status}`
+      );
     }
     const venueData = await response.json();
     return {
@@ -43,8 +45,8 @@ export const fetchVenueLocation = async (
       venueLatitude: venueData.venue_raw.location.coordinates[1],
     };
   } catch (error) {
-    console.error("Error fetching venue data:", error);
-    throw error;
+    console.log("Error fetching venue static data:", error);
+    throw Error(`${error}`);
   }
 };
 
@@ -89,8 +91,8 @@ export const calculateDistance = async (venueSlug: string): Promise<number> => {
     // Calculate distance using haversine formula
     return haversineDistance(userLat, userLon, venueLat, venueLon);
   } catch (error) {
-    console.error("Error calculating distance:", error);
-    throw error;
+    console.log("Error calculating distance:", error);
+    throw Error(`Error fetching location data: ${error}`);
   }
 };
 
@@ -99,7 +101,6 @@ export const calculateDistance = async (venueSlug: string): Promise<number> => {
 export const fetchVenueDynamicData = async (
   venueSlug: string
 ): Promise<{
-  distance: number;
   basePrice: number;
   orderMinimumNoSurcharge: number;
   distanceRanges: distanceRangesType[];
@@ -108,13 +109,15 @@ export const fetchVenueDynamicData = async (
 
   try {
     const response = await fetch(endpoint);
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch venue data: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch venue data or venue not found: ${response.status}`
+      );
     }
     const venueData = await response.json();
-    const distance = await calculateDistance(venueSlug);
+
     return {
-      distance: distance,
       basePrice: venueData.venue_raw.delivery_specs.delivery_pricing.base_price,
       orderMinimumNoSurcharge:
         venueData.venue_raw.delivery_specs.order_minimum_no_surcharge,
@@ -122,8 +125,8 @@ export const fetchVenueDynamicData = async (
         venueData.venue_raw.delivery_specs.delivery_pricing.distance_ranges,
     };
   } catch (error) {
-    console.log("Error fetching data", error);
-    throw new Error(`Error `);
+    console.log("Error fetching venue dynamic data", error);
+    throw Error(`${error}`);
   }
 };
 
@@ -134,30 +137,39 @@ export const calculatePriceBreakDown = async (
   cartValue: number
 ): Promise<PriceBreakdown> => {
   try {
-    const { distance, basePrice, orderMinimumNoSurcharge, distanceRanges } =
+    const { basePrice, orderMinimumNoSurcharge, distanceRanges } =
       await fetchVenueDynamicData(venueSlug);
 
+    // runs only if venue details are availabe.
+    const distance = await calculateDistance(venueSlug);
+
     // Calculate small order surcharge
-    const cartValueInCents= cartValue *100
+    const cartValueInCents = cartValue * 100;
     const smallOrderSurcharge = Math.max(
       0,
       orderMinimumNoSurcharge - cartValueInCents
     );
 
+    let deliveryUpperLimit: number = 0;
     // Find the appropriate distance range
-    const applicableRange = distanceRanges.find(
-      (range) =>
-        distance >= range.min && (range.max === 0 || distance < range.max)
-    );
+    const applicableRange = distanceRanges.find((range) => {
+      // Check if the current range is valid for the given distance
+      if (range.max === 0) {
+        deliveryUpperLimit = range.min;
+        // "max: 0" means delivery is not available for distances >= range.min
+        return distance < range.min; // If distance >= range.min, return false
+      }
+      return distance >= range.min && distance < range.max;
+    });
 
     if (!applicableRange) {
       return {
         cartValue,
         distance,
-        smallOrderSurcharge,
+        smallOrderSurcharge: 0,
         deliveryFee: 0,
         totalPrice: 0,
-        error: "Delivery not possible for this distance.",
+        error: `Currently, delivery is possible for a maximum distance of ${deliveryUpperLimit} meters. Sorry for the inconvinience.`,
       };
     }
 
@@ -177,14 +189,14 @@ export const calculatePriceBreakDown = async (
       totalPrice,
     };
   } catch (error) {
-    console.error("Error calculating price breakdown:", error);
+    console.log("Error calculating price breakdown:", error);
     return {
       cartValue,
       distance: 0,
       smallOrderSurcharge: 0,
       deliveryFee: 0,
       totalPrice: 0,
-      error: `Failed to calculate price breakdown. Please try again.`,
+      error: `${error}` || "Failed to calculate pricebreakdown",
     };
   }
 };

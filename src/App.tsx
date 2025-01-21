@@ -6,6 +6,8 @@ import CalculateForm from "./components/CalculateForm";
 import { useState } from "react";
 import { calculatePriceBreakDown } from "./utils/utils";
 
+import PriceBreakdownDisplay from "./components/PriceBreakDown";
+
 function App() {
   // global states
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
@@ -37,35 +39,38 @@ function App() {
         data.venueSlug,
         parseFloat(data.cartValue)
       );
-
       if (result.error) {
         setGlobalErrors(result.error);
-        setPriceBreakdown(null); // Clear the price breakdown
+        // display cart value and distance without other fees
+        setPriceBreakdown(result);
       } else {
-        setPriceBreakdown(result); // Set the price breakdown if no error
+        setPriceBreakdown(result);
+        setGlobalErrors(null);
       }
     } catch (error) {
       setGlobalErrors(
-        "An error occurred while calculating the price breakdown."
+        `An error occurred while calculating the price breakdown: ${error}`
       );
-      setPriceBreakdown(null); // Clear the price breakdown in case of error
+      setPriceBreakdown(null);
     }
-    console.log(priceBreakdown)
   };
 
   return (
-    <CalculateForm
-      setValue={setValue}
-      formErrors={errors}
-      clearFormErrors={clearErrors}
-      trigger={trigger}
-      register={register}
-      handleSubmit={handleSubmit}
-      globalErrors={globalErrors}
-      setGlobalErrors={setGlobalErrors}
-      onFormSubmit={onSubmit}
-      isSubmitting={isSubmitting}
-    />
+    <>
+      <CalculateForm
+        setValue={setValue}
+        formErrors={errors}
+        clearFormErrors={clearErrors}
+        trigger={trigger}
+        register={register}
+        handleSubmit={handleSubmit}
+        globalErrors={globalErrors}
+        setGlobalErrors={setGlobalErrors}
+        onFormSubmit={onSubmit}
+        isSubmitting={isSubmitting}
+      />
+      <PriceBreakdownDisplay priceBreakdown={priceBreakdown} />
+    </>
   );
 }
 

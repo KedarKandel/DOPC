@@ -28,8 +28,8 @@ export type distanceRangesType = {
 
 // type for pricebreakdowm
 export type PriceBreakdown = {
-  cartValue:number
-  distance:number
+  cartValue: number;
+  distance: number;
   smallOrderSurcharge: number;
   deliveryFee: number;
   totalPrice: number;
