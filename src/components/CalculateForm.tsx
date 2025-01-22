@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 // types and utilities
 import { FormData, schema } from "../utils/schema";
 import { PriceBreakDownType } from "../utils/types";
-import { calculatePriceBreakDown, getUserLocation } from "../utils/utils";
+import { calculatePriceBreakDown, getUserLocation } from "../utils/helpers";
 
 // components
 import FormInput from "./FormInput";
@@ -15,6 +15,19 @@ import GetLocationBtn from "./GetLocationBtn";
 import PriceBreakdownDisplay from "./PriceBreakDown";
 
 const CalculateForm: React.FC = () => {
+  // global states
+  const [priceBreakdown, setPriceBreakdown] =
+    useState<PriceBreakDownType | null>(null);
+  const [globalErrors, setGlobalErrors] = useState<string | null>(null);
+
+  // get location state
+  const [isLocationFetching, setIsLocationFetching] = useState(false);
+
+  // states -- to stop resubmitting same data.
+  const [lastSubmittedData, setLastSubmittedData] = useState<FormData | null>(
+    null
+  );
+
   const {
     register,
     handleSubmit,
@@ -25,25 +38,9 @@ const CalculateForm: React.FC = () => {
   } = useForm<FormData>({
     defaultValues: {
       venueSlug: "home-assignment-venue-helsinki",
-      cartValue: "",
-      userLatitude: "",
-      userLongitude: "",
     },
     resolver: zodResolver(schema),
   });
-
-  // get location state
-  const [isLocationFetching, setIsLocationFetching] = useState(false);
-
-  // global states
-  const [priceBreakdown, setPriceBreakdown] =
-    useState<PriceBreakDownType | null>(null);
-  const [globalErrors, setGlobalErrors] = useState<string | null>(null);
-
-  // states -- to stop resubmitting same data.
-  const [lastSubmittedData, setLastSubmittedData] = useState<FormData | null>(
-    null
-  );
 
   // get the user location
   const handleGetLocation = async () => {
@@ -89,16 +86,17 @@ const CalculateForm: React.FC = () => {
       lastSubmittedData &&
       JSON.stringify(data) === JSON.stringify(lastSubmittedData)
     ) {
-      setGlobalErrors(
-        `Update form values to calculate new price breakdown.`
-      );
+      setGlobalErrors(`Update form values to calculate new price breakdown.`);
       return;
     }
     setLastSubmittedData(data);
+
     try {
       const result = await calculatePriceBreakDown(
         data.venueSlug,
-        parseFloat(data.cartValue)
+        parseFloat(data.cartValue),
+        data.userLatitude,
+        data.userLongitude
       );
       if (result.error) {
         setGlobalErrors(result.error);
@@ -127,7 +125,7 @@ const CalculateForm: React.FC = () => {
         name="venueSlug"
         label="Venue Slug"
         dataTestId="venueSlug"
-        type="text"
+        type="string"
         placeholder="Venue name"
         register={register("venueSlug")}
         error={errors.venueSlug}
@@ -137,11 +135,12 @@ const CalculateForm: React.FC = () => {
         name="cartValue"
         label="Cart Value (EUR)"
         dataTestId="cartValue"
-        type="string"
+        type="text"
         placeholder="0.00"
         register={register("cartValue")}
-        error={errors.cartValue}
         onChange={(e) => handleChange("cartValue", e)}
+        error={errors.cartValue}
+       
       />
       <FormInput
         name="userLatitude"
@@ -169,7 +168,7 @@ const CalculateForm: React.FC = () => {
         <p className="my-1 text-sm text-red-500">{globalErrors}</p>
       )}
       <GetLocationBtn
-        getLocation={handleGetLocation}
+        handleGetLocation={handleGetLocation}
         isLocationFetching={isLocationFetching}
       />
       <CalculateBtn isSubmitting={isSubmitting} />

@@ -14,7 +14,6 @@ const FormInput = ({
   register,
   error,
   onChange,
-
   ...props
 }: FormInputProps) => {
   return (

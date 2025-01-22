@@ -1,19 +1,22 @@
 type Props = {
-  getLocation: () => void;
+  handleGetLocation: () => void;
   isLocationFetching: boolean;
 };
 
-const GetLocationBtn = ({ getLocation, isLocationFetching }: Props) => {
+const GetLocationBtn = ({ handleGetLocation, isLocationFetching }: Props) => {
   return (
     <button
+      type="button"
       aria-label="getLocationbutton"
-      onClick={getLocation}
-      className={`mb-4 max-w-max bg-blue-500 py-2 px-4 rounded hover:bg-blue-600 ${
-        isLocationFetching ? "text-gray-300 cursor-not-allowed" : "text-white"
+      onClick={handleGetLocation}
+      className={`mb-4 max-w-max bg-blue-500 py-2 px-4 rounded  ${
+        isLocationFetching
+          ? "text-gray-600 bg-gray-400 cursor-not-allowed"
+          : "text-white hover:bg-blue-600"
       }`}
       disabled={isLocationFetching}
     >
-      {isLocationFetching ? "Getting location..." : "Get Location"}
+      {isLocationFetching ? "Loading..." : "Get Location"}
     </button>
   );
 };

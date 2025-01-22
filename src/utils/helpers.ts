@@ -2,25 +2,29 @@ import { distanceRangesType, PriceBreakDownType } from "./types";
 
 //1. helper function to get user's location co-ordinates.
 export const getUserLocation = (): Promise<{
-  userLatitude: string;
-  userLongitude: string;
+  userLatitude: number;
+  userLongitude: number;
 }> => {
   return new Promise((resolve, reject) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // const userLatitude = position.coords.latitude.toString();
-          // const userLongitude = position.coords.longitude.toString();
-          
-          //for testing --by-passing form values
-          // --within range co-ordinates(distance multiplier as well):
-          const userLatitude = String(60.1702143);
-          const userLongitude = String(24.9003512);
+          const userLatitude = position.coords.latitude;
+          const userLongitude = position.coords.longitude;
+
+          //for testing purpose
+
+          // invalid corordinates:
+          //const userLatitude = String(-91.1702143);
+          //const userLongitude = String(181.8813512);
+
+          // --within range co-ordinates with distance multiplier as well):
+          //const userLatitude = String(60.1702143);
+          //const userLongitude = String(24.9003512);
 
           // --out of range co-ordinates:
           //const userLatitude = String(60.1702143);
           //const userLongitude = String(24.8813512);
-        
 
           resolve({ userLatitude, userLongitude });
         },
@@ -39,8 +43,8 @@ export const getUserLocation = (): Promise<{
 export const fetchVenueLocation = async (
   venueSlug: string
 ): Promise<{
-  venueLatitude: string;
-  venueLongitude: string;
+  venueLatitude: number;
+  venueLongitude: number;
 }> => {
   try {
     const endpoint = `https://consumer-api.development.dev.woltapi.com/home-assignment-api/v1/venues/${venueSlug}/static`;
@@ -51,10 +55,10 @@ export const fetchVenueLocation = async (
       );
     }
     const venueData = await response.json();
-    // console.log(venueData)
+    //console.log(venueData)
     return {
-      venueLongitude: venueData.venue_raw.location.coordinates[0],
-      venueLatitude: venueData.venue_raw.location.coordinates[1],
+      venueLongitude: parseFloat(venueData.venue_raw.location.coordinates[0]),
+      venueLatitude: parseFloat(venueData.venue_raw.location.coordinates[1]),
     };
   } catch (error: any) {
     console.log(`Error fetching venue static data: ${error}`);
@@ -68,7 +72,7 @@ export const straightLineDistance = (
   lon1: number,
   lat2: number,
   lon2: number
-) => {
+): number => {
   const toRadians = (degrees: number) => degrees * (Math.PI / 180);
   const R = 6371; // Earth's radius in kilometers
   const dLat = toRadians(lat2 - lat1);
@@ -85,30 +89,7 @@ export const straightLineDistance = (
   return distance;
 };
 
-//4. Helper function to calculate distance between user and venue.
-export const calculateDistance = async (venueSlug: string): Promise<number> => {
-  try {
-    // Fetch user's location and venue's location.
-    const { userLatitude, userLongitude } = await getUserLocation();
-    const { venueLatitude, venueLongitude } = await fetchVenueLocation(
-      venueSlug
-    );
-
-    // Convert strings to numbers
-    const userLat = parseFloat(userLatitude);
-    const userLon = parseFloat(userLongitude);
-    const venueLat = parseFloat(venueLatitude);
-    const venueLon = parseFloat(venueLongitude);
-
-    // Calculate distance using straightLineDistance formula(parameters-in-order)
-    return straightLineDistance(userLat, userLon, venueLat, venueLon);
-  } catch (error: any) {
-    console.log(`Error calculating distance: ${error}`);
-    throw Error(error.message);
-  }
-};
-
-//5. Helper function to fetch the venue's dynamic data
+//4. Helper function to fetch the venue's dynamic data
 
 export const fetchVenueDynamicData = async (
   venueSlug: string
@@ -142,20 +123,30 @@ export const fetchVenueDynamicData = async (
   }
 };
 
-//6. calculate price break down
-
+//5. Helper function to calculate price break down
 export const calculatePriceBreakDown = async (
   venueSlug: string,
-  cartValue: number
+  cartValue: number,
+  userLatitude: number,
+  userLongitude: number
 ): Promise<PriceBreakDownType> => {
-  // converting cartvalue to cents
+  // converting cartvalue to cents(venue data returns on cents)
   const cartValueInCents = cartValue * 100;
   try {
     const { basePrice, orderMinimumNoSurcharge, distanceRanges } =
       await fetchVenueDynamicData(venueSlug);
 
-    // runs only if venue details are availabe.
-    const distance = await calculateDistance(venueSlug);
+    const { venueLatitude, venueLongitude } = await fetchVenueLocation(
+      venueSlug
+    );
+
+    // calculate distance between venue and user.
+    const distance = straightLineDistance(
+      userLatitude,
+      userLongitude,
+      venueLatitude,
+      venueLongitude
+    );
 
     // Calculate small order surcharge(can't be negative).
     const smallOrderSurcharge = Math.max(
@@ -165,9 +156,8 @@ export const calculatePriceBreakDown = async (
 
     let deliveryUpperLimit: number = 0;
 
-    // Find the appropriate distance range or return undefined
+    // Find the appropriate distance range or return undefined.
     const applicableRange = distanceRanges.find((range) => {
-   
       if (range.max === 0) {
         deliveryUpperLimit = range.min;
         // "max: 0" means delivery is not available for distances >= range.min
@@ -175,7 +165,6 @@ export const calculatePriceBreakDown = async (
       }
       return distance >= range.min && distance < range.max;
     });
-   
 
     if (!applicableRange) {
       return {

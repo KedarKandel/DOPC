@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import CalculateForm from "../components/CalculateForm";
-import { getUserLocation } from "../utils/utils";
+import { getUserLocation } from "../utils/helpers";
 
 
 
