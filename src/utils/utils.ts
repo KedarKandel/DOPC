@@ -1,6 +1,6 @@
 import { distanceRangesType, PriceBreakDownType } from "./types";
 
-// helper function to get user's location co-ordinates.
+//1. helper function to get user's location co-ordinates.
 export const getUserLocation = (): Promise<{
   userLatitude: string;
   userLongitude: string;
@@ -9,8 +9,19 @@ export const getUserLocation = (): Promise<{
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const userLatitude = position.coords.latitude.toString();
-          const userLongitude = position.coords.longitude.toString();
+          // const userLatitude = position.coords.latitude.toString();
+          // const userLongitude = position.coords.longitude.toString();
+          
+          //for testing --by-passing form values
+          // --within range co-ordinates(distance multiplier as well):
+          const userLatitude = String(60.1702143);
+          const userLongitude = String(24.9003512);
+
+          // --out of range co-ordinates:
+          //const userLatitude = String(60.1702143);
+          //const userLongitude = String(24.8813512);
+        
+
           resolve({ userLatitude, userLongitude });
         },
         (error) => {
@@ -24,7 +35,7 @@ export const getUserLocation = (): Promise<{
   });
 };
 
-// Helper function to fetch venue's static data
+//2. Helper function to fetch venue's static data
 export const fetchVenueLocation = async (
   venueSlug: string
 ): Promise<{
@@ -40,6 +51,7 @@ export const fetchVenueLocation = async (
       );
     }
     const venueData = await response.json();
+    // console.log(venueData)
     return {
       venueLongitude: venueData.venue_raw.location.coordinates[0],
       venueLatitude: venueData.venue_raw.location.coordinates[1],
@@ -50,8 +62,8 @@ export const fetchVenueLocation = async (
   }
 };
 
-// Helper function to calculate distance between two coordinates
-export const haversineDistance = (
+//3. Helper function to calculate distance between two coordinates
+export const straightLineDistance = (
   lat1: number,
   lon1: number,
   lat2: number,
@@ -73,10 +85,10 @@ export const haversineDistance = (
   return distance;
 };
 
-// Combined helper to calculate distance between user and venue.
+//4. Helper function to calculate distance between user and venue.
 export const calculateDistance = async (venueSlug: string): Promise<number> => {
   try {
-    // Fetch both user and venue locations
+    // Fetch user's location and venue's location.
     const { userLatitude, userLongitude } = await getUserLocation();
     const { venueLatitude, venueLongitude } = await fetchVenueLocation(
       venueSlug
@@ -88,15 +100,15 @@ export const calculateDistance = async (venueSlug: string): Promise<number> => {
     const venueLat = parseFloat(venueLatitude);
     const venueLon = parseFloat(venueLongitude);
 
-    // Calculate distance using haversine formula
-    return haversineDistance(userLat, userLon, venueLat, venueLon);
+    // Calculate distance using straightLineDistance formula(parameters-in-order)
+    return straightLineDistance(userLat, userLon, venueLat, venueLon);
   } catch (error: any) {
     console.log(`Error calculating distance: ${error}`);
     throw Error(error.message);
   }
 };
 
-// helper function to fetch the venue's dynamic data
+//5. Helper function to fetch the venue's dynamic data
 
 export const fetchVenueDynamicData = async (
   venueSlug: string
@@ -130,7 +142,7 @@ export const fetchVenueDynamicData = async (
   }
 };
 
-// calculate price break down
+//6. calculate price break down
 
 export const calculatePriceBreakDown = async (
   venueSlug: string,
@@ -145,24 +157,25 @@ export const calculatePriceBreakDown = async (
     // runs only if venue details are availabe.
     const distance = await calculateDistance(venueSlug);
 
-    // Calculate small order surcharge
-
+    // Calculate small order surcharge(can't be negative).
     const smallOrderSurcharge = Math.max(
       0,
       orderMinimumNoSurcharge - cartValueInCents
     );
 
     let deliveryUpperLimit: number = 0;
-    // Find the appropriate distance range
+
+    // Find the appropriate distance range or return undefined
     const applicableRange = distanceRanges.find((range) => {
-      // Check if the current range is valid for the given distance
+   
       if (range.max === 0) {
         deliveryUpperLimit = range.min;
         // "max: 0" means delivery is not available for distances >= range.min
-        return distance < range.min; // If distance >= range.min, return false
+        return distance < deliveryUpperLimit; // If distance >= range.min, return false
       }
       return distance >= range.min && distance < range.max;
     });
+   
 
     if (!applicableRange) {
       return {
@@ -171,7 +184,9 @@ export const calculatePriceBreakDown = async (
         smallOrderSurcharge: 0,
         deliveryFee: 0,
         totalPrice: 0,
-        error: `Currently, delivery is possible for a maximum distance of ${deliveryUpperLimit} meters. Sorry for the inconvinience.`,
+        error: `Oops!, our delivery distance range is less than ${
+          deliveryUpperLimit / 1000
+        }km for now. Distance measured is approx: ${distance / 1000} km.`,
       };
     }
 

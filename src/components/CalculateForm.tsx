@@ -1,19 +1,12 @@
 // libraries
 import { useState } from "react";
-import {
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormHandleSubmit,
-  FieldErrors,
-  UseFormClearErrors,
-  SubmitHandler,
-  UseFormTrigger,
-} from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // types and utilities
-import { FormData } from "../utils/schema";
+import { FormData, schema } from "../utils/schema";
 import { PriceBreakDownType } from "../utils/types";
-import { getUserLocation } from "../utils/utils";
+import { calculatePriceBreakDown, getUserLocation } from "../utils/utils";
 
 // components
 import FormInput from "./FormInput";
@@ -21,42 +14,43 @@ import CalculateBtn from "./CalculateBtn";
 import GetLocationBtn from "./GetLocationBtn";
 import PriceBreakdownDisplay from "./PriceBreakDown";
 
-type CalculateFormProps = {
-  register: UseFormRegister<FormData>;
-  handleSubmit: UseFormHandleSubmit<FormData>;
-  setValue: UseFormSetValue<FormData>;
-  formErrors: FieldErrors<FormData>;
-  clearFormErrors: UseFormClearErrors<FormData>;
-  globalErrors: string | null;
-  setGlobalErrors: React.Dispatch<React.SetStateAction<string | null>>;
-  isSubmitting: boolean;
-  onFormSubmit: SubmitHandler<FormData>;
-  trigger: UseFormTrigger<FormData>;
-  priceBreakdown: PriceBreakDownType | null;
-};
+const CalculateForm: React.FC = () => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    clearErrors,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    defaultValues: {
+      venueSlug: "home-assignment-venue-helsinki",
+      cartValue: "",
+      userLatitude: "",
+      userLongitude: "",
+    },
+    resolver: zodResolver(schema),
+  });
 
-const CalculateForm = ({
-  register,
-  handleSubmit,
-  setValue,
-  formErrors,
-  clearFormErrors,
-  trigger,
-  globalErrors,
-  setGlobalErrors,
-  isSubmitting,
-  onFormSubmit,
-  priceBreakdown,
-}: CalculateFormProps) => {
   // get location state
   const [isLocationFetching, setIsLocationFetching] = useState(false);
+
+  // global states
+  const [priceBreakdown, setPriceBreakdown] =
+    useState<PriceBreakDownType | null>(null);
+  const [globalErrors, setGlobalErrors] = useState<string | null>(null);
+
+  // states -- to stop resubmitting same data.
+  const [lastSubmittedData, setLastSubmittedData] = useState<FormData | null>(
+    null
+  );
 
   // get the user location
   const handleGetLocation = async () => {
     setGlobalErrors(null);
     setIsLocationFetching(true);
-    clearFormErrors("userLatitude");
-    clearFormErrors("userLongitude");
+    clearErrors("userLatitude");
+    clearErrors("userLongitude");
     try {
       const location = await getUserLocation();
       setValue("userLatitude", location.userLatitude);
@@ -68,16 +62,14 @@ const CalculateForm = ({
     }
   };
 
-  // Handle input changes for proper formatting of cart value
-  //  -- add leading zero if input starts with "."
+  // Handle input changes -- add leading zero if input starts with "."
   const handleChange = (
     fieldName: keyof FormData,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { value } = e.target;
-    // Clear errors for the field first
-    clearFormErrors(fieldName);
-    // clear global errors once typing starts
+    // Clear errors for the field and global errors
+    clearErrors(fieldName);
     setGlobalErrors(null);
 
     if (fieldName === "cartValue") {
@@ -88,6 +80,39 @@ const CalculateForm = ({
     }
     // Trigger validation for empty fields again.
     trigger(fieldName);
+  };
+
+  // submit the form and calculate price breakdown
+  const onFormSubmit = async (data: FormData) => {
+    // Stop resubmitting if the data has not changed.
+    if (
+      lastSubmittedData &&
+      JSON.stringify(data) === JSON.stringify(lastSubmittedData)
+    ) {
+      setGlobalErrors(
+        `Update form values to calculate new price breakdown.`
+      );
+      return;
+    }
+    setLastSubmittedData(data);
+    try {
+      const result = await calculatePriceBreakDown(
+        data.venueSlug,
+        parseFloat(data.cartValue)
+      );
+      if (result.error) {
+        setGlobalErrors(result.error);
+        setPriceBreakdown(null);
+      } else {
+        setPriceBreakdown(result);
+        setGlobalErrors(null);
+      }
+    } catch (error) {
+      setGlobalErrors(
+        `An error occurred while calculating the price breakdown: ${error}`
+      );
+      setPriceBreakdown(null);
+    }
   };
 
   return (
@@ -105,7 +130,7 @@ const CalculateForm = ({
         type="text"
         placeholder="Venue name"
         register={register("venueSlug")}
-        error={formErrors.venueSlug}
+        error={errors.venueSlug}
         onChange={(e) => handleChange("venueSlug", e)}
       />
       <FormInput
@@ -115,7 +140,7 @@ const CalculateForm = ({
         type="string"
         placeholder="0.00"
         register={register("cartValue")}
-        error={formErrors.cartValue}
+        error={errors.cartValue}
         onChange={(e) => handleChange("cartValue", e)}
       />
       <FormInput
@@ -125,7 +150,7 @@ const CalculateForm = ({
         type="text"
         placeholder="User location latitude"
         register={register("userLatitude")}
-        error={formErrors.userLatitude}
+        error={errors.userLatitude}
         readOnly
         required
       />
@@ -136,7 +161,7 @@ const CalculateForm = ({
         type="text"
         placeholder="User location longitude"
         register={register("userLongitude")}
-        error={formErrors.userLongitude}
+        error={errors.userLongitude}
         readOnly
         required
       />

@@ -8,9 +8,8 @@ const PriceBreakdownDisplay = ({
   priceBreakdown,
 }: PriceBreakdownDisplayProps) => {
   if (!priceBreakdown) {
-    return <p>No price breakdown available. Please calculate first.</p>;
+    return <></>;
   }
-
 
   // format currency and handle data-raw-value
   const formatCurrency = (value: number) => {
