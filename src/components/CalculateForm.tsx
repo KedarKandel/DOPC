@@ -33,7 +33,6 @@ const CalculateForm: React.FC = () => {
     handleSubmit,
     setValue,
     clearErrors,
-    trigger,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
@@ -59,26 +58,6 @@ const CalculateForm: React.FC = () => {
     }
   };
 
-  // Handle input changes -- add leading zero if input starts with "."
-  const handleChange = (
-    fieldName: keyof FormData,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { value } = e.target;
-    // Clear errors for the field and global errors
-    clearErrors(fieldName);
-    setGlobalErrors(null);
-
-    if (fieldName === "cartValue") {
-      const formattedValue = value.startsWith(".") ? `0${value}` : value;
-      setValue("cartValue", formattedValue);
-    } else {
-      setValue(fieldName, value);
-    }
-    // Trigger validation for empty fields again.
-    trigger(fieldName);
-  };
-
   // submit the form and calculate price breakdown
   const onFormSubmit = async (data: FormData) => {
     // Stop resubmitting if the data has not changed.
@@ -86,15 +65,15 @@ const CalculateForm: React.FC = () => {
       lastSubmittedData &&
       JSON.stringify(data) === JSON.stringify(lastSubmittedData)
     ) {
-      setGlobalErrors(`Update form values to calculate new price breakdown.`);
+      setGlobalErrors(`No changes in the form fields. It gives the same result.`);
       return;
     }
-    setLastSubmittedData(data);
 
+    setLastSubmittedData(data);
     try {
       const result = await calculatePriceBreakDown(
         data.venueSlug,
-        parseFloat(data.cartValue),
+        data.cartValue,
         data.userLatitude,
         data.userLongitude
       );
@@ -103,6 +82,7 @@ const CalculateForm: React.FC = () => {
         setPriceBreakdown(null);
       } else {
         setPriceBreakdown(result);
+        // clear all erros
         setGlobalErrors(null);
       }
     } catch (error) {
@@ -112,6 +92,7 @@ const CalculateForm: React.FC = () => {
       setPriceBreakdown(null);
     }
   };
+
 
   return (
     <form
@@ -129,40 +110,47 @@ const CalculateForm: React.FC = () => {
         placeholder="Venue name"
         register={register("venueSlug")}
         error={errors.venueSlug}
-        onChange={(e) => handleChange("venueSlug", e)}
+        setGlobalErrors = {setGlobalErrors}
+        //onChange={(e) => handleInputChange(e)}
       />
       <FormInput
         name="cartValue"
         label="Cart Value (EUR)"
         dataTestId="cartValue"
-        type="text"
+        type="number"
+        step={0.01}
+        min={0}
         placeholder="0.00"
         register={register("cartValue")}
-        onChange={(e) => handleChange("cartValue", e)}
         error={errors.cartValue}
-       
+        setGlobalErrors = {setGlobalErrors}
+        //onChange={(e) => handleInputChange(e)}
       />
       <FormInput
         name="userLatitude"
         label="User Latitude"
         dataTestId="userLatitude"
-        type="text"
+        type="number"
         placeholder="User location latitude"
         register={register("userLatitude")}
         error={errors.userLatitude}
-        readOnly
-        required
+        step={0.0000001}
+        setGlobalErrors = {setGlobalErrors}
+        //onChange={(e) => handleInputChange(e)}
+        //readOnly
       />
       <FormInput
         name="userLongitude"
         label="User Longitude"
         dataTestId="userLongitude"
-        type="text"
+        type="number"
+        step={0.0000001}
         placeholder="User location longitude"
         register={register("userLongitude")}
         error={errors.userLongitude}
-        readOnly
-        required
+        setGlobalErrors = {setGlobalErrors}
+        //onChange={(e) => handleInputChange(e)}
+        //readOnly
       />
       {globalErrors && (
         <p className="my-1 text-sm text-red-500">{globalErrors}</p>

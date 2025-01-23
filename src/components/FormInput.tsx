@@ -5,7 +5,7 @@ type FormInputProps = {
   dataTestId?: string;
   register: UseFormRegisterReturn;
   error?: FieldError;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setGlobalErrors?: React.Dispatch<React.SetStateAction<string | null>>;
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
 const FormInput = ({
@@ -13,9 +13,10 @@ const FormInput = ({
   dataTestId,
   register,
   error,
-  onChange,
+  setGlobalErrors,
   ...props
 }: FormInputProps) => {
+ 
   return (
     <div className="mb-4 w-4/5">
       <label className="block text-lg text-gray-700" htmlFor={props.name}>
@@ -32,10 +33,13 @@ const FormInput = ({
         {...register}
         {...props}
         onChange={(e) => {
-          if (onChange) onChange(e);
+          if (setGlobalErrors) {
+            setGlobalErrors(null);
+          }
+          register.onChange(e);
         }}
       />
-      {error && <p className="text-red-700 text-sm mt-1">{error.message}</p>}
+      {error && <p className="text-red-500 text-sm mt-1">{error.message}</p>}
     </div>
   );
 };

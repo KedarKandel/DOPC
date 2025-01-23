@@ -9,22 +9,22 @@ export const getUserLocation = (): Promise<{
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const userLatitude = position.coords.latitude;
-          const userLongitude = position.coords.longitude;
+          //const userLatitude = Number(position.coords.latitude);
+          //const userLongitude = Number(position.coords.longitude);
 
           //for testing purpose
 
           // invalid corordinates:
-          //const userLatitude = String(-91.1702143);
-          //const userLongitude = String(181.8813512);
+          //const userLatitude = Number(-91.1702143);
+          //const userLongitude = Number(181.8813512);
 
           // --within range co-ordinates with distance multiplier as well):
-          //const userLatitude = String(60.1702143);
-          //const userLongitude = String(24.9003512);
+           const userLatitude = Number(60.1702143);
+           const userLongitude = Number(24.9003512);
 
           // --out of range co-ordinates:
-          //const userLatitude = String(60.1702143);
-          //const userLongitude = String(24.8813512);
+          //const userLatitude = Number(60.1702143);
+          //const userLongitude = Number(24.8813512);
 
           resolve({ userLatitude, userLongitude });
         },
@@ -55,7 +55,7 @@ export const fetchVenueLocation = async (
       );
     }
     const venueData = await response.json();
-    //console.log(venueData)
+    console.log(venueData)
     return {
       venueLongitude: parseFloat(venueData.venue_raw.location.coordinates[0]),
       venueLatitude: parseFloat(venueData.venue_raw.location.coordinates[1]),
