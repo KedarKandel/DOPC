@@ -1,4 +1,4 @@
-import { distanceRangesType, PriceBreakDownType } from "./types";
+import { distanceRangesType, PriceBreakdownType } from "./types";
 
 //1. helper function to get user's location co-ordinates.
 export const getUserLocation = (): Promise<{
@@ -9,22 +9,21 @@ export const getUserLocation = (): Promise<{
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          //const userLatitude = Number(position.coords.latitude);
-          //const userLongitude = Number(position.coords.longitude);
+          const userLatitude = Number(position.coords.latitude);
+          const userLongitude = Number(position.coords.longitude);
 
           //for testing purpose
-
           // invalid corordinates:
-          //const userLatitude = Number(-91.1702143);
-          //const userLongitude = Number(181.8813512);
+          //const userLatitude = -91.1702143;
+          //const userLongitude = 181.8813512;
 
           // --within range co-ordinates with distance multiplier as well):
-           const userLatitude = Number(60.1702143);
-           const userLongitude = Number(24.9003512);
+          //const userLatitude = 60.1702143;
+          //const userLongitude = 24.9003512;
 
           // --out of range co-ordinates:
-          //const userLatitude = Number(60.1702143);
-          //const userLongitude = Number(24.8813512);
+          //const userLatitude = 60.1702143;
+          //const userLongitude = 24.8813512;
 
           resolve({ userLatitude, userLongitude });
         },
@@ -55,10 +54,16 @@ export const fetchVenueLocation = async (
       );
     }
     const venueData = await response.json();
-    console.log(venueData)
+    const venueLatitude = parseFloat(
+      venueData.venue_raw.location.coordinates[1]
+    );
+    const venueLongitude = parseFloat(
+      venueData.venue_raw.location.coordinates[0]
+    );
+
     return {
-      venueLongitude: parseFloat(venueData.venue_raw.location.coordinates[0]),
-      venueLatitude: parseFloat(venueData.venue_raw.location.coordinates[1]),
+      venueLatitude,
+      venueLongitude,
     };
   } catch (error: any) {
     console.log(`Error fetching venue static data: ${error}`);
@@ -66,30 +71,7 @@ export const fetchVenueLocation = async (
   }
 };
 
-//3. Helper function to calculate distance between two coordinates
-export const straightLineDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const toRadians = (degrees: number) => degrees * (Math.PI / 180);
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = parseFloat((R * c * 1000).toFixed(2)); // distance in metres
-  return distance;
-};
-
-//4. Helper function to fetch the venue's dynamic data
+//3. Helper function to fetch the venue's dynamic data
 
 export const fetchVenueDynamicData = async (
   venueSlug: string
@@ -109,7 +91,7 @@ export const fetchVenueDynamicData = async (
       );
     }
     const venueData = await response.json();
-    // console.log(venueData);
+    //console.log(venueData);
     return {
       basePrice: venueData.venue_raw.delivery_specs.delivery_pricing.base_price,
       orderMinimumNoSurcharge:
@@ -123,24 +105,48 @@ export const fetchVenueDynamicData = async (
   }
 };
 
+//4. Helper function to calculate distance between two coordinates
+export const straightLineDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) => {
+  const toRadians = (degrees: number) => degrees * (Math.PI / 180);
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = Math.round(R * c * 1000);
+  return distance;
+};
+
 //5. Helper function to calculate price break down
 export const calculatePriceBreakDown = async (
   venueSlug: string,
   cartValue: number,
   userLatitude: number,
   userLongitude: number
-): Promise<PriceBreakDownType> => {
+): Promise<PriceBreakdownType> => {
   // converting cartvalue to cents(venue data returns on cents)
+
   const cartValueInCents = cartValue * 100;
   try {
     const { basePrice, orderMinimumNoSurcharge, distanceRanges } =
       await fetchVenueDynamicData(venueSlug);
 
+    // Fetch venue location
     const { venueLatitude, venueLongitude } = await fetchVenueLocation(
       venueSlug
     );
 
-    // calculate distance between venue and user.
     const distance = straightLineDistance(
       userLatitude,
       userLongitude,
@@ -182,7 +188,9 @@ export const calculatePriceBreakDown = async (
     const { a, b } = applicableRange;
 
     // Calculate delivery fee
-    const deliveryFee = basePrice + a + (b * distance) / 10;
+    const deliveryFee = Math.round(
+      ((basePrice + a + (b * distance) / 10) * 100) / 100
+    );
 
     // Calculate total price
     const totalPrice = cartValueInCents + smallOrderSurcharge + deliveryFee;

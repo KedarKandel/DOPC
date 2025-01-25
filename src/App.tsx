@@ -1,5 +1,5 @@
 // Components
-import CalculateForm from "./components/CalculateForm";
+import CalculateForm from "./components/CalculatorForm";
 
 const App: React.FC = () => {
   return (

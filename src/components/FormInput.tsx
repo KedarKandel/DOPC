@@ -1,3 +1,4 @@
+
 import { FieldError, UseFormRegisterReturn } from "react-hook-form";
 
 type FormInputProps = {
@@ -29,7 +30,7 @@ const FormInput = ({
         id={props.name}
         type={props.type}
         placeholder={props.placeholder}
-        data-test-id={dataTestId}
+        data-testid={dataTestId}
         {...register}
         {...props}
         onChange={(e) => {

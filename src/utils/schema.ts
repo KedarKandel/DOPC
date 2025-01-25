@@ -9,7 +9,7 @@ const cartSchema = z.coerce
   .refine(
     (value) => value === Math.round(value * 100) / 100, // Check if the number has up to two decimal places
     {
-      message: "Cart value must be a number with up to 2 decimal places.",
+      message: "Cart value must be a positive number with up to 2 decimal places.",
     }
   );
 

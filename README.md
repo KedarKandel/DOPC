@@ -1,50 +1,30 @@
-# React + TypeScript + Vite
+# Delivery Order Price Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This application calculates delivery price breakdowns based on cart value, venue location, and user location. The application is built using React, TypeScript, tailwind-css, react-hook-form,and Zod for schema validation.
 
-Currently, two official plugins are available:
+For testing purpose: vitest, react-testing-library, jest-dom has been utilized.
+* copy this venue Slug : "home-assignment-venue-helsinki"
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
+Get started:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+1. download/clone from dropbox.
 
-- Configure the top-level `parserOptions` property like this:
+2. cd dopc in the terminal and npm install to install all required dependencies.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+3. start the development server:
+   command: npm run dev
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+4. navigate to http://localhost:5173/ in the browser
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+5. enter the information in the form:
+ # venue slug is : "home-assignment-venue-helsinki", it's kept default as well but works with any venue if there is a valid endpoint.
+ # get current location from the get location button or enter valid co ordinates yourself.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+6. Run the tests : cd into dopc in the terminal
+   command: npm run test
+
+This application is created by  Kedar Kandel. 
+Thankyou🙏  
+
+

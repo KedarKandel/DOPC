@@ -5,11 +5,11 @@ export type distanceRangesType = {
     max: number;
     a: number;
     b: number;
-    flag: null | string;
+    flag?: null | string;
   };
   
   // type for pricebreakdowm
-  export type PriceBreakDownType = {
+  export type PriceBreakdownType = {
     cartValue: number;
     distance: number;
     smallOrderSurcharge: number;

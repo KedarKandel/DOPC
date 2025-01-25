@@ -1,21 +1,20 @@
-import { PriceBreakDownType } from "../utils/types";
 
-type PriceBreakdownDisplayProps = {
-  priceBreakdown: PriceBreakDownType | null;
+import { PriceBreakdownType } from "../utils/types";
+
+type PriceBreakDownProps = {
+  priceBreakdown: PriceBreakdownType | null;
 };
 
-const PriceBreakdownDisplay = ({
-  priceBreakdown,
-}: PriceBreakdownDisplayProps) => {
+const PriceBreakDown = ({ priceBreakdown }: PriceBreakDownProps) => {
   if (!priceBreakdown) {
     return <></>;
   }
 
-  // format currency and handle data-raw-value
-  const formatCurrency = (value: number) => {
+  // format currency, pass data-raw-value
+  const formatCurrency = (value: number, testId: string) => {
     const euros = (value / 100).toFixed(2);
     return (
-      <span data-raw-value={value}>
+      <span data-testid={testId} data-raw-value={value} >
         {new Intl.NumberFormat("fi-FI", {
           style: "currency",
           currency: "EUR",
@@ -24,9 +23,11 @@ const PriceBreakdownDisplay = ({
     );
   };
 
-  // format distance and handle data-raw-value
-  const formatDistance = (value: number) => (
-    <span data-raw-value={value / 1000}>{`${value} m`}</span>
+  // format distance, pass handle data-raw-value
+  const formatDistance = (value: number, testId:string) => (
+    <span data-testid={testId} data-raw-value={value}>
+      {`${value} m`}
+    </span>
   );
 
   return (
@@ -34,27 +35,30 @@ const PriceBreakdownDisplay = ({
       <h2 className="text-lg font-bold text-gray-700">Price Breakdown</h2>
       <div className="flex justify-between font-medium">
         <span>Cart Value:</span>
-        {formatCurrency(priceBreakdown.cartValue)}
+        {formatCurrency(priceBreakdown.cartValue, "resultCartValue")}
       </div>
       <div className="flex justify-between font-medium">
         <span>Distance:</span>
-        {formatDistance(priceBreakdown.distance)}
+        {formatDistance(priceBreakdown.distance, "distance")}
       </div>
       <div className="flex justify-between font-medium">
         <span>Delivery Fee:</span>
-        {formatCurrency(priceBreakdown.deliveryFee)}
+        {formatCurrency(priceBreakdown.deliveryFee, "deliveryFee")}
       </div>
       <div className="flex justify-between font-medium">
         <span>Small Order Surcharge:</span>
-        {formatCurrency(priceBreakdown.smallOrderSurcharge)}
+        {formatCurrency(
+          priceBreakdown.smallOrderSurcharge,
+          "smallOrderSurcharge"
+        )}
       </div>
 
       <div className="flex justify-between font-bold">
         <span>Total Price:</span>
-        {formatCurrency(priceBreakdown.totalPrice)}
+        {formatCurrency(priceBreakdown.totalPrice, "totalPrice")}
       </div>
     </div>
   );
 };
 
-export default PriceBreakdownDisplay;
+export default PriceBreakDown;
