@@ -135,7 +135,7 @@ const CalculatorForm: React.FC = () => {
         placeholder="User location latitude"
         register={register("userLatitude")}
         error={errors.userLatitude}
-        step={0.00000001}
+        step={0.0000000000001}
         setGlobalErrors={setGlobalErrors}
         //readOnly
       />
@@ -144,7 +144,7 @@ const CalculatorForm: React.FC = () => {
         label="User Longitude"
         dataTestId="userLongitude"
         type="number"
-        step={0.00000001}
+        step={0.000000000001}
         placeholder="User location longitude"
         register={register("userLongitude")}
         error={errors.userLongitude}

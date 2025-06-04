@@ -19,9 +19,9 @@ describe("CalculateBtn", () => {
   });
 
 //1.
-  it("should render the button 'Calculate delivery price' ", () => {
+  it("should render the button 'Calculate delivery price' ",  () => {
     render(<CalculateBtn isSubmitting={false} />);
-    const button = screen.getByRole("button", {
+    const button =  screen.getByRole("button", {
       name: "calculate delivery price breakdown",
     });
     expect(button).toBeInTheDocument();
